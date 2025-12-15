@@ -1,5 +1,5 @@
--- Squid Game 2042 | Aimbot + ESP PRO
--- Versión Mejorada
+-- Squid Game 2042 | Rayfield Style + GF Logo
+-- By Lola 🐉
 
 --========================
 -- PLACE ID CHECK
@@ -16,6 +16,7 @@ end
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UIS = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
 local CoreGui = game:GetService("CoreGui")
 local Camera = workspace.CurrentCamera
 
@@ -40,18 +41,41 @@ local Settings = {
     PredictMovement = true,
     IgnoreTeam = true,
     ShowFOVCircle = true,
-    WallCheck = false,
-    AutoShoot = false
+    WallCheck = false
 }
+
+--========================
+-- THEME (Rayfield)
+--========================
+local Theme = {
+    Background = Color3.fromRGB(25, 25, 35),
+    SecondaryBackground = Color3.fromRGB(30, 30, 40),
+    Stroke = Color3.fromRGB(60, 60, 80),
+    Divider = Color3.fromRGB(40, 40, 55),
+    Text = Color3.fromRGB(240, 240, 250),
+    TextDark = Color3.fromRGB(150, 150, 170),
+    Accent = Color3.fromRGB(135, 110, 255),
+    AccentDark = Color3.fromRGB(100, 80, 200),
+    Success = Color3.fromRGB(100, 220, 120),
+    Error = Color3.fromRGB(255, 80, 80)
+}
+
+--========================
+-- UTILITIES
+--========================
+local function Tween(obj, props, duration)
+    duration = duration or 0.3
+    local tween = TweenService:Create(obj, TweenInfo.new(duration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), props)
+    tween:Play()
+    return tween
+end
 
 --========================
 -- TEAM CHECK
 --========================
 local function IsEnemy(player)
     if not Settings.IgnoreTeam then return true end
-    if not player.Team or not LocalPlayer.Team then
-        return true
-    end
+    if not player.Team or not LocalPlayer.Team then return true end
     return player.Team.Name ~= LocalPlayer.Team.Name
 end
 
@@ -60,10 +84,8 @@ end
 --========================
 local function HasLineOfSight(origin, target)
     if not Settings.WallCheck then return true end
-    
     local ray = Ray.new(origin, (target - origin).Unit * (target - origin).Magnitude)
-    local hit, pos = workspace:FindPartOnRayWithIgnoreList(ray, {LocalPlayer.Character, Camera})
-    
+    local hit = workspace:FindPartOnRayWithIgnoreList(ray, {LocalPlayer.Character, Camera})
     if hit then
         local character = hit:FindFirstAncestorOfClass("Model")
         if character and Players:GetPlayerFromCharacter(character) then
@@ -81,10 +103,10 @@ local FOV = Drawing.new("Circle")
 FOV.Thickness = 2
 FOV.NumSides = 64
 FOV.Radius = Settings.FOV
-FOV.Color = Color3.fromRGB(255,255,255)
+FOV.Color = Theme.Accent
 FOV.Filled = false
 FOV.Visible = Settings.ShowFOVCircle
-FOV.Transparency = 0.5
+FOV.Transparency = 0.6
 
 --========================
 -- AIMBOT LOGIC
@@ -109,60 +131,41 @@ UIS.InputEnded:Connect(function(i,gp)
 end)
 
 local function IsTargetValid(target)
-    if not target then return false end
-    if not target.Parent then return false end
-    
+    if not target or not target.Parent then return false end
     local player = Players:GetPlayerFromCharacter(target.Parent)
-    if not player then return false end
-    if not IsEnemy(player) then return false end
-    
+    if not player or not IsEnemy(player) then return false end
     local hum = target.Parent:FindFirstChildOfClass("Humanoid")
     if not hum or hum.Health <= 0 then return false end
-    
     local pos, vis = Camera:WorldToViewportPoint(target.Position)
     if not vis then return false end
-    
-    if Settings.WallCheck then
-        if not HasLineOfSight(Camera.CFrame.Position, target.Position) then
-            return false
-        end
+    if Settings.WallCheck and not HasLineOfSight(Camera.CFrame.Position, target.Position) then
+        return false
     end
-    
     return true
 end
 
 local function PredictPosition(part)
     if not Settings.PredictMovement then return part.Position end
-    
     local velocity = part.Velocity
     local distance = (part.Position - Camera.CFrame.Position).Magnitude
-    local timeToHit = distance / 1000 -- Ajusta según la velocidad de las balas
-    
+    local timeToHit = distance / 1000
     return part.Position + (velocity * timeToHit)
 end
 
 local function GetClosestTarget()
     local closest, dist = nil, Settings.FOV
     local mouse = UIS:GetMouseLocation()
-
     for _,plr in ipairs(Players:GetPlayers()) do
-        if plr == LocalPlayer then continue end
-        if not plr.Character then continue end
+        if plr == LocalPlayer or not plr.Character then continue end
         if not IsEnemy(plr) then continue end
-
         local hum = plr.Character:FindFirstChildOfClass("Humanoid")
         local part = plr.Character:FindFirstChild(Settings.AimPart)
         if not hum or hum.Health <= 0 or not part then continue end
-
         local pos, vis = Camera:WorldToViewportPoint(part.Position)
         if not vis then continue end
-        
-        if Settings.WallCheck then
-            if not HasLineOfSight(Camera.CFrame.Position, part.Position) then
-                continue
-            end
+        if Settings.WallCheck and not HasLineOfSight(Camera.CFrame.Position, part.Position) then
+            continue
         end
-
         local mag = (Vector2.new(pos.X,pos.Y) - mouse).Magnitude
         if mag < dist then
             dist = mag
@@ -179,7 +182,6 @@ local ESPObjects = {}
 
 local function CreateESP(player)
     if player == LocalPlayer then return end
-
     local esp = {
         text = Drawing.new("Text"),
         box = Drawing.new("Square"),
@@ -187,61 +189,42 @@ local function CreateESP(player)
         healthbar = Drawing.new("Square"),
         healthbarBg = Drawing.new("Square")
     }
-    
-    -- Text
     esp.text.Size = 13
     esp.text.Center = true
     esp.text.Outline = true
     esp.text.Font = 2
-    
-    -- Box
-    esp.box.Thickness = 1
+    esp.box.Thickness = 2
     esp.box.Filled = false
     esp.box.Transparency = 1
-    
-    -- Tracer
-    esp.tracer.Thickness = 1
+    esp.tracer.Thickness = 2
     esp.tracer.Transparency = 1
-    
-    -- Health bar
     esp.healthbar.Filled = true
     esp.healthbar.Thickness = 1
     esp.healthbar.Transparency = 1
-    
     esp.healthbarBg.Filled = true
     esp.healthbarBg.Thickness = 1
     esp.healthbarBg.Transparency = 1
     esp.healthbarBg.Color = Color3.fromRGB(0,0,0)
-
     ESPObjects[player] = esp
 
     local connection
     connection = RunService.RenderStepped:Connect(function()
         pcall(function()
             if not Settings.ESP then
-                for _,v in pairs(esp) do
-                    v.Visible = false
-                end
+                for _,v in pairs(esp) do v.Visible = false end
                 return
             end
-
             if not player or not player.Parent or not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then
-                for _,v in pairs(esp) do
-                    v.Visible = false
-                end
+                for _,v in pairs(esp) do v.Visible = false end
                 return
             end
-
             local hrp = player.Character.HumanoidRootPart
             local hum = player.Character:FindFirstChildOfClass("Humanoid")
             local head = player.Character:FindFirstChild("Head")
-            
             if not hum or not head then return end
-
             local pos, onscreen = Camera:WorldToViewportPoint(hrp.Position)
             local headPos = Camera:WorldToViewportPoint(head.Position + Vector3.new(0,0.5,0))
             local legPos = Camera:WorldToViewportPoint(hrp.Position - Vector3.new(0,3,0))
-
             if onscreen then
                 local enemy = IsEnemy(player)
                 if enemy and not Settings.ShowEnemies then
@@ -252,11 +235,8 @@ local function CreateESP(player)
                     for _,v in pairs(esp) do v.Visible = false end
                     return
                 end
-
-                local color = enemy and Color3.fromRGB(255,50,50) or Color3.fromRGB(50,255,50)
+                local color = enemy and Theme.Error or Theme.Success
                 local distance = math.floor((hrp.Position - Camera.CFrame.Position).Magnitude)
-                
-                -- Text
                 local displayText = player.Name
                 if Settings.ShowDistance then
                     displayText = displayText .. " [" .. distance .. "m]"
@@ -264,43 +244,30 @@ local function CreateESP(player)
                 if Settings.ShowHealth then
                     displayText = displayText .. " | " .. math.floor(hum.Health) .. "HP"
                 end
-                
                 esp.text.Text = displayText
                 esp.text.Position = Vector2.new(headPos.X, headPos.Y)
                 esp.text.Color = color
                 esp.text.Visible = true
-                
-                -- Box
                 if Settings.ShowBoxes then
                     local height = math.abs(headPos.Y - legPos.Y)
                     local width = height / 2
-                    
                     esp.box.Size = Vector2.new(width, height)
                     esp.box.Position = Vector2.new(pos.X - width/2, headPos.Y)
                     esp.box.Color = color
                     esp.box.Visible = true
-                    
-                    -- Health bar
                     local healthPercent = hum.Health / hum.MaxHealth
                     esp.healthbarBg.Size = Vector2.new(3, height)
                     esp.healthbarBg.Position = Vector2.new(pos.X - width/2 - 6, headPos.Y)
                     esp.healthbarBg.Visible = true
-                    
                     esp.healthbar.Size = Vector2.new(3, height * healthPercent)
                     esp.healthbar.Position = Vector2.new(pos.X - width/2 - 6, legPos.Y - (height * healthPercent))
-                    esp.healthbar.Color = Color3.fromRGB(
-                        255 * (1 - healthPercent),
-                        255 * healthPercent,
-                        0
-                    )
+                    esp.healthbar.Color = Color3.fromRGB(255 * (1 - healthPercent), 255 * healthPercent, 0)
                     esp.healthbar.Visible = true
                 else
                     esp.box.Visible = false
                     esp.healthbar.Visible = false
                     esp.healthbarBg.Visible = false
                 end
-                
-                -- Tracer
                 if Settings.ShowTracers then
                     esp.tracer.From = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y)
                     esp.tracer.To = Vector2.new(pos.X, pos.Y)
@@ -310,249 +277,380 @@ local function CreateESP(player)
                     esp.tracer.Visible = false
                 end
             else
-                for _,v in pairs(esp) do
-                    v.Visible = false
-                end
+                for _,v in pairs(esp) do v.Visible = false end
             end
         end)
     end)
-    
     player.AncestryChanged:Connect(function()
         if not player.Parent then
             connection:Disconnect()
-            for _,v in pairs(esp) do
-                v:Remove()
-            end
+            for _,v in pairs(esp) do v:Remove() end
             ESPObjects[player] = nil
         end
     end)
 end
 
-for _,p in ipairs(Players:GetPlayers()) do
-    CreateESP(p)
-end
+for _,p in ipairs(Players:GetPlayers()) do CreateESP(p) end
 Players.PlayerAdded:Connect(CreateESP)
 
 --========================
--- GUI
+-- GUI RAYFIELD STYLE
 --========================
 local Gui = Instance.new("ScreenGui", CoreGui)
-Gui.Name = "SquidAdmin"
+Gui.Name = "RayfieldGF"
 Gui.ResetOnSpawn = false
+Gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
-local Main = Instance.new("Frame", Gui)
-Main.Size = UDim2.new(0,260,0,380)
-Main.Position = UDim2.new(0,20,0.5,-190)
-Main.BackgroundColor3 = Color3.fromRGB(25,25,30)
+-- Shadow
+local Shadow = Instance.new("ImageLabel", Gui)
+Shadow.Name = "Shadow"
+Shadow.BackgroundTransparency = 1
+Shadow.Size = UDim2.new(0, 500, 0, 500)
+Shadow.Position = UDim2.new(0.5, -250, 0.5, -250)
+Shadow.Image = "rbxassetid://6015897843"
+Shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
+Shadow.ImageTransparency = 0.5
+Shadow.ScaleType = Enum.ScaleType.Slice
+Shadow.SliceCenter = Rect.new(49, 49, 450, 450)
+
+-- Main Frame
+local Main = Instance.new("Frame", Shadow)
+Main.Name = "Main"
+Main.Size = UDim2.new(0, 460, 0, 500)
+Main.Position = UDim2.new(0.5, -230, 0.5, -250)
+Main.BackgroundColor3 = Theme.Background
 Main.BorderSizePixel = 0
-Main.Active = true
-Main.Draggable = true
+Main.ClipsDescendants = true
 
-local Corner = Instance.new("UICorner", Main)
-Corner.CornerRadius = UDim.new(0,10)
+local MainCorner = Instance.new("UICorner", Main)
+MainCorner.CornerRadius = UDim.new(0, 12)
 
+local MainStroke = Instance.new("UIStroke", Main)
+MainStroke.Color = Theme.Stroke
+MainStroke.Thickness = 1
+MainStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
+-- Top Bar
 local TopBar = Instance.new("Frame", Main)
-TopBar.Size = UDim2.new(1,0,0,35)
-TopBar.BackgroundColor3 = Color3.fromRGB(180,0,0)
+TopBar.Name = "TopBar"
+TopBar.Size = UDim2.new(1, 0, 0, 50)
+TopBar.BackgroundColor3 = Theme.SecondaryBackground
 TopBar.BorderSizePixel = 0
 
 local TopCorner = Instance.new("UICorner", TopBar)
-TopCorner.CornerRadius = UDim.new(0,10)
+TopCorner.CornerRadius = UDim.new(0, 12)
 
+local TopFix = Instance.new("Frame", TopBar)
+TopFix.Size = UDim2.new(1, 0, 0, 25)
+TopFix.Position = UDim2.new(0, 0, 1, -25)
+TopFix.BackgroundColor3 = Theme.SecondaryBackground
+TopFix.BorderSizePixel = 0
+
+-- Title with GF
 local Title = Instance.new("TextLabel", TopBar)
-Title.Size = UDim2.new(1,-40,1,0)
-Title.Position = UDim2.new(0,5,0,0)
-Title.Text = "🦑 SQUID GAME PRO"
-Title.TextXAlignment = Enum.TextXAlignment.Left
-Title.TextColor3 = Color3.new(1,1,1)
+Title.Size = UDim2.new(1, -100, 1, 0)
+Title.Position = UDim2.new(0, 55, 0, 0)
 Title.BackgroundTransparency = 1
+Title.Text = "GF CHEATS"
+Title.TextColor3 = Theme.Text
 Title.Font = Enum.Font.GothamBold
-Title.TextSize = 16
+Title.TextSize = 18
+Title.TextXAlignment = Enum.TextXAlignment.Left
 
+local Subtitle = Instance.new("TextLabel", TopBar)
+Subtitle.Size = UDim2.new(1, -100, 1, 0)
+Subtitle.Position = UDim2.new(0, 55, 0, 0)
+Subtitle.BackgroundTransparency = 1
+Subtitle.Text = "Squid Game 2042"
+Subtitle.TextColor3 = Theme.TextDark
+Subtitle.Font = Enum.Font.Gotham
+Subtitle.TextSize = 11
+Subtitle.TextXAlignment = Enum.TextXAlignment.Left
+Subtitle.TextYAlignment = Enum.TextYAlignment.Bottom
+
+-- GF Logo Icon (simplified)
+local LogoFrame = Instance.new("Frame", TopBar)
+LogoFrame.Size = UDim2.new(0, 35, 0, 35)
+LogoFrame.Position = UDim2.new(0, 10, 0.5, -17.5)
+LogoFrame.BackgroundColor3 = Theme.Accent
+LogoFrame.BorderSizePixel = 0
+
+local LogoCorner = Instance.new("UICorner", LogoFrame)
+LogoCorner.CornerRadius = UDim.new(1, 0)
+
+local LogoText = Instance.new("TextLabel", LogoFrame)
+LogoText.Size = UDim2.new(1, 0, 1, 0)
+LogoText.BackgroundTransparency = 1
+LogoText.Text = "GF"
+LogoText.TextColor3 = Color3.new(1, 1, 1)
+LogoText.Font = Enum.Font.GothamBold
+LogoText.TextSize = 16
+
+-- Minimize Button
+local MinBtn = Instance.new("TextButton", TopBar)
+MinBtn.Size = UDim2.new(0, 35, 0, 35)
+MinBtn.Position = UDim2.new(1, -45, 0.5, -17.5)
+MinBtn.BackgroundColor3 = Theme.SecondaryBackground
+MinBtn.Text = "—"
+MinBtn.TextColor3 = Theme.Text
+MinBtn.Font = Enum.Font.GothamBold
+MinBtn.TextSize = 16
+MinBtn.BorderSizePixel = 0
+
+local MinCorner = Instance.new("UICorner", MinBtn)
+MinCorner.CornerRadius = UDim.new(0, 8)
+
+local MinStroke = Instance.new("UIStroke", MinBtn)
+MinStroke.Color = Theme.Stroke
+MinStroke.Thickness = 1
+
+-- Divider Line
+local Divider = Instance.new("Frame", Main)
+Divider.Size = UDim2.new(1, -40, 0, 1)
+Divider.Position = UDim2.new(0, 20, 0, 60)
+Divider.BackgroundColor3 = Theme.Divider
+Divider.BorderSizePixel = 0
+
+-- Scroll Frame
 local ScrollFrame = Instance.new("ScrollingFrame", Main)
-ScrollFrame.Size = UDim2.new(1,-10,1,-45)
-ScrollFrame.Position = UDim2.new(0,5,0,40)
+ScrollFrame.Size = UDim2.new(1, -40, 1, -80)
+ScrollFrame.Position = UDim2.new(0, 20, 0, 70)
 ScrollFrame.BackgroundTransparency = 1
 ScrollFrame.BorderSizePixel = 0
 ScrollFrame.ScrollBarThickness = 4
-ScrollFrame.CanvasSize = UDim2.new(0,0,0,0)
+ScrollFrame.ScrollBarImageColor3 = Theme.Accent
+ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
 ScrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
 
 local UIList = Instance.new("UIListLayout", ScrollFrame)
 UIList.SortOrder = Enum.SortOrder.LayoutOrder
-UIList.Padding = UDim.new(0,5)
+UIList.Padding = UDim.new(0, 8)
 
-local Buttons = {}
-
-local function Section(txt)
-    local s = Instance.new("TextLabel", ScrollFrame)
-    s.Size = UDim2.new(1,-10,0,25)
-    s.Text = txt
-    s.TextXAlignment = Enum.TextXAlignment.Left
-    s.TextColor3 = Color3.fromRGB(255,200,50)
-    s.BackgroundTransparency = 1
-    s.Font = Enum.Font.GothamBold
-    s.TextSize = 13
-    return s
+-- Functions for UI Elements
+local function Section(text)
+    local section = Instance.new("TextLabel", ScrollFrame)
+    section.Size = UDim2.new(1, 0, 0, 25)
+    section.BackgroundTransparency = 1
+    section.Text = text
+    section.TextColor3 = Theme.Accent
+    section.Font = Enum.Font.GothamBold
+    section.TextSize = 13
+    section.TextXAlignment = Enum.TextXAlignment.Left
+    return section
 end
 
-local function Button(txt, default, callback)
-    local b = Instance.new("TextButton", ScrollFrame)
-    b.Size = UDim2.new(1,-10,0,32)
-    b.Text = txt .. (type(default) == "boolean" and (default and ": ON" or ": OFF") or "")
-    b.BackgroundColor3 = type(default) == "boolean" and (default and Color3.fromRGB(0,150,0) or Color3.fromRGB(150,0,0)) or Color3.fromRGB(100,100,100)
-    b.TextColor3 = Color3.new(1,1,1)
-    b.Font = Enum.Font.Gotham
-    b.TextSize = 12
-    b.BorderSizePixel = 0
+local function Toggle(text, default, callback)
+    local toggle = Instance.new("Frame", ScrollFrame)
+    toggle.Size = UDim2.new(1, 0, 0, 40)
+    toggle.BackgroundColor3 = Theme.SecondaryBackground
+    toggle.BorderSizePixel = 0
     
-    local btnCorner = Instance.new("UICorner", b)
-    btnCorner.CornerRadius = UDim.new(0,6)
+    local toggleCorner = Instance.new("UICorner", toggle)
+    toggleCorner.CornerRadius = UDim.new(0, 8)
     
-    b.MouseButton1Click:Connect(function()
-        callback(b)
+    local toggleStroke = Instance.new("UIStroke", toggle)
+    toggleStroke.Color = Theme.Stroke
+    toggleStroke.Thickness = 1
+    
+    local label = Instance.new("TextLabel", toggle)
+    label.Size = UDim2.new(1, -60, 1, 0)
+    label.Position = UDim2.new(0, 15, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.TextColor3 = Theme.Text
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 13
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    
+    local button = Instance.new("TextButton", toggle)
+    button.Size = UDim2.new(0, 40, 0, 20)
+    button.Position = UDim2.new(1, -50, 0.5, -10)
+    button.BackgroundColor3 = default and Theme.Success or Theme.Stroke
+    button.Text = ""
+    button.BorderSizePixel = 0
+    
+    local btnCorner = Instance.new("UICorner", button)
+    btnCorner.CornerRadius = UDim.new(1, 0)
+    
+    local indicator = Instance.new("Frame", button)
+    indicator.Size = UDim2.new(0, 16, 0, 16)
+    indicator.Position = default and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
+    indicator.BackgroundColor3 = Color3.new(1, 1, 1)
+    indicator.BorderSizePixel = 0
+    
+    local indCorner = Instance.new("UICorner", indicator)
+    indCorner.CornerRadius = UDim.new(1, 0)
+    
+    local state = default
+    
+    button.MouseButton1Click:Connect(function()
+        state = not state
+        callback(state)
+        
+        Tween(button, {BackgroundColor3 = state and Theme.Success or Theme.Stroke}, 0.2)
+        Tween(indicator, {Position = state and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)}, 0.2)
     end)
     
-    return b
+    return toggle
 end
 
-Section("━━━ AIMBOT ━━━")
+-- Create UI Elements
+Section("AIMBOT")
 
-Buttons.Aimbot = Button("Aimbot", Settings.Aimbot, function(self)
-    Settings.Aimbot = not Settings.Aimbot
-    self.Text = "Aimbot: "..(Settings.Aimbot and "ON" or "OFF")
-    self.BackgroundColor3 = Settings.Aimbot and Color3.fromRGB(0,150,0) or Color3.fromRGB(150,0,0)
+Toggle("Aimbot", Settings.Aimbot, function(v)
+    Settings.Aimbot = v
 end)
 
-Buttons.Predict = Button("Predicción Movimiento", Settings.PredictMovement, function(self)
-    Settings.PredictMovement = not Settings.PredictMovement
-    self.Text = "Predicción Movimiento: "..(Settings.PredictMovement and "ON" or "OFF")
-    self.BackgroundColor3 = Settings.PredictMovement and Color3.fromRGB(0,150,0) or Color3.fromRGB(150,0,0)
+Toggle("Predicción de Movimiento", Settings.PredictMovement, function(v)
+    Settings.PredictMovement = v
 end)
 
-Buttons.WallCheck = Button("Ignorar Paredes", Settings.WallCheck, function(self)
-    Settings.WallCheck = not Settings.WallCheck
-    self.Text = "Ignorar Paredes: "..(Settings.WallCheck and "ON" or "OFF")
-    self.BackgroundColor3 = Settings.WallCheck and Color3.fromRGB(0,150,0) or Color3.fromRGB(150,0,0)
+Toggle("Verificar Paredes", Settings.WallCheck, function(v)
+    Settings.WallCheck = v
 end)
 
-Buttons.FOVCircle = Button("Círculo FOV", Settings.ShowFOVCircle, function(self)
-    Settings.ShowFOVCircle = not Settings.ShowFOVCircle
-    FOV.Visible = Settings.ShowFOVCircle
-    self.Text = "Círculo FOV: "..(Settings.ShowFOVCircle and "ON" or "OFF")
-    self.BackgroundColor3 = Settings.ShowFOVCircle and Color3.fromRGB(0,150,0) or Color3.fromRGB(150,0,0)
+Toggle("Círculo FOV", Settings.ShowFOVCircle, function(v)
+    Settings.ShowFOVCircle = v
+    FOV.Visible = v
 end)
 
-Section("━━━ ESP/VISUAL ━━━")
+Section("ESP / VISUAL")
 
-Buttons.ESP = Button("ESP General", Settings.ESP, function(self)
-    Settings.ESP = not Settings.ESP
-    self.Text = "ESP General: "..(Settings.ESP and "ON" or "OFF")
-    self.BackgroundColor3 = Settings.ESP and Color3.fromRGB(0,150,0) or Color3.fromRGB(150,0,0)
+Toggle("ESP Activado", Settings.ESP, function(v)
+    Settings.ESP = v
 end)
 
-Buttons.Distance = Button("Mostrar Distancia", Settings.ShowDistance, function(self)
-    Settings.ShowDistance = not Settings.ShowDistance
-    self.Text = "Mostrar Distancia: "..(Settings.ShowDistance and "ON" or "OFF")
-    self.BackgroundColor3 = Settings.ShowDistance and Color3.fromRGB(0,150,0) or Color3.fromRGB(150,0,0)
+Toggle("Mostrar Distancia", Settings.ShowDistance, function(v)
+    Settings.ShowDistance = v
 end)
 
-Buttons.Health = Button("Mostrar Vida", Settings.ShowHealth, function(self)
-    Settings.ShowHealth = not Settings.ShowHealth
-    self.Text = "Mostrar Vida: "..(Settings.ShowHealth and "ON" or "OFF")
-    self.BackgroundColor3 = Settings.ShowHealth and Color3.fromRGB(0,150,0) or Color3.fromRGB(150,0,0)
+Toggle("Mostrar Vida", Settings.ShowHealth, function(v)
+    Settings.ShowHealth = v
 end)
 
-Buttons.Boxes = Button("Cajas ESP", Settings.ShowBoxes, function(self)
-    Settings.ShowBoxes = not Settings.ShowBoxes
-    self.Text = "Cajas ESP: "..(Settings.ShowBoxes and "ON" or "OFF")
-    self.BackgroundColor3 = Settings.ShowBoxes and Color3.fromRGB(0,150,0) or Color3.fromRGB(150,0,0)
+Toggle("Cajas ESP", Settings.ShowBoxes, function(v)
+    Settings.ShowBoxes = v
 end)
 
-Buttons.Tracers = Button("Líneas al Centro", Settings.ShowTracers, function(self)
-    Settings.ShowTracers = not Settings.ShowTracers
-    self.Text = "Líneas al Centro: "..(Settings.ShowTracers and "ON" or "OFF")
-    self.BackgroundColor3 = Settings.ShowTracers and Color3.fromRGB(0,150,0) or Color3.fromRGB(150,0,0)
+Toggle("Tracers", Settings.ShowTracers, function(v)
+    Settings.ShowTracers = v
 end)
 
-Section("━━━ FILTROS ━━━")
+Section("FILTROS")
 
-Buttons.Enemies = Button("Ver Enemigos", Settings.ShowEnemies, function(self)
-    Settings.ShowEnemies = not Settings.ShowEnemies
-    self.Text = "Ver Enemigos: "..(Settings.ShowEnemies and "ON" or "OFF")
-    self.BackgroundColor3 = Settings.ShowEnemies and Color3.fromRGB(0,150,0) or Color3.fromRGB(150,0,0)
+Toggle("Ver Enemigos", Settings.ShowEnemies, function(v)
+    Settings.ShowEnemies = v
 end)
 
-Buttons.Team = Button("Ver Equipo", Settings.ShowTeam, function(self)
-    Settings.ShowTeam = not Settings.ShowTeam
-    self.Text = "Ver Equipo: "..(Settings.ShowTeam and "ON" or "OFF")
-    self.BackgroundColor3 = Settings.ShowTeam and Color3.fromRGB(0,150,0) or Color3.fromRGB(150,0,0)
+Toggle("Ver Equipo", Settings.ShowTeam, function(v)
+    Settings.ShowTeam = v
 end)
 
-local Min = Instance.new("TextButton", TopBar)
-Min.Size = UDim2.new(0,30,0,30)
-Min.Position = UDim2.new(1,-33,0,2.5)
-Min.Text = "━"
-Min.BackgroundColor3 = Color3.fromRGB(150,0,0)
-Min.TextColor3 = Color3.new(1,1,1)
-Min.Font = Enum.Font.GothamBold
-Min.TextSize = 18
-Min.BorderSizePixel = 0
-
-local minCorner = Instance.new("UICorner", Min)
-minCorner.CornerRadius = UDim.new(0,6)
-
-local MiniBtn
-Min.MouseButton1Click:Connect(function()
-    Main.Visible = false
-    if MiniBtn then MiniBtn:Destroy() end
+-- Minimize Functionality with GF Logo
+local MiniButton
+MinBtn.MouseButton1Click:Connect(function()
+    Tween(Shadow, {Size = UDim2.new(0, 0, 0, 0)}, 0.3)
+    Tween(Main, {Size = UDim2.new(0, 0, 0, 0)}, 0.3)
+    wait(0.3)
+    Shadow.Visible = false
     
-    MiniBtn = Instance.new("TextButton", Gui)
-    MiniBtn.Size = UDim2.new(0,140,0,35)
-    MiniBtn.Position = UDim2.new(0,20,0.5,0)
-    MiniBtn.Text = "🦑 Abrir"
-    MiniBtn.BackgroundColor3 = Color3.fromRGB(180,0,0)
-    MiniBtn.TextColor3 = Color3.new(1,1,1)
-    MiniBtn.Font = Enum.Font.GothamBold
-    MiniBtn.TextSize = 14
-    MiniBtn.BorderSizePixel = 0
+    if MiniButton then MiniButton:Destroy() end
     
-    local miniCorner = Instance.new("UICorner", MiniBtn)
-    miniCorner.CornerRadius = UDim.new(0,8)
+    -- Create Mini Button with GF Logo
+    MiniButton = Instance.new("ImageButton", Gui)
+    MiniButton.Name = "MiniLogo"
+    MiniButton.Size = UDim2.new(0, 0, 0, 0)
+    MiniButton.Position = UDim2.new(0, 20, 0, 20)
+    MiniButton.BackgroundColor3 = Theme.SecondaryBackground
+    MiniButton.BorderSizePixel = 0
+    MiniButton.Image = ""
     
-    MiniBtn.MouseButton1Click:Connect(function()
-        Main.Visible = true
-        MiniBtn:Destroy()
-        MiniBtn = nil
+    local miniCorner = Instance.new("UICorner", MiniButton)
+    miniCorner.CornerRadius = UDim.new(1, 0)
+    
+    local miniStroke = Instance.new("UIStroke", MiniButton)
+    miniStroke.Color = Theme.Accent
+    miniStroke.Thickness = 2
+    
+    -- GF Logo Recreation
+    local gfFrame = Instance.new("Frame", MiniButton)
+    gfFrame.Size = UDim2.new(0.7, 0, 0.7, 0)
+    gfFrame.Position = UDim2.new(0.15, 0, 0.15, 0)
+    gfFrame.BackgroundTransparency = 1
+    
+    local gfText = Instance.new("TextLabel", gfFrame)
+    gfText.Size = UDim2.new(1, 0, 1, 0)
+    gfText.BackgroundTransparency = 1
+    gfText.Text = "GF"
+    gfText.TextColor3 = Color3.new(1, 1, 1)
+    gfText.Font = Enum.Font.GothamBold
+    gfText.TextSize = 28
+    gfText.TextScaled = true
+    
+    -- Orbital rings effect
+    local ring1 = Instance.new("ImageLabel", MiniButton)
+    ring1.Size = UDim2.new(1, 0, 1, 0)
+    ring1.BackgroundTransparency = 1
+    ring1.Image = "rbxassetid://3570695787"
+    ring1.ImageColor3 = Theme.Accent
+    ring1.ImageTransparency = 0.3
+    
+    Tween(MiniButton, {Size = UDim2.new(0, 60, 0, 60)}, 0.3)
+    
+    -- Rotation animation
+    RunService.RenderStepped:Connect(function()
+        if ring1 and ring1.Parent then
+            ring1.Rotation = ring1.Rotation + 0.5
+        end
+    end)
+    
+    MiniButton.MouseButton1Click:Connect(function()
+        Tween(MiniButton, {Size = UDim2.new(0, 0, 0, 0)}, 0.3)
+        wait(0.3)
+        MiniButton:Destroy()
+        MiniButton = nil
+        
+        Shadow.Visible = true
+        Shadow.Size = UDim2.new(0, 0, 0, 0)
+        Main.Size = UDim2.new(0, 0, 0, 0)
+        Tween(Shadow, {Size = UDim2.new(0, 500, 0, 500)}, 0.3)
+        Tween(Main, {Size = UDim2.new(0, 460, 0, 500)}, 0.3)
     end)
 end)
 
---========================
--- STATS DISPLAY
---========================
-local StatsGui = Instance.new("ScreenGui", CoreGui)
-StatsGui.Name = "StatsDisplay"
-StatsGui.ResetOnSpawn = false
+-- Dragging
+local dragging, dragInput, dragStart, startPos
+TopBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = Shadow.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
 
-local StatsFrame = Instance.new("Frame", StatsGui)
-StatsFrame.Size = UDim2.new(0,200,0,100)
-StatsFrame.Position = UDim2.new(1,-210,0,10)
-StatsFrame.BackgroundColor3 = Color3.fromRGB(25,25,30)
-StatsFrame.BackgroundTransparency = 0.3
-StatsFrame.BorderSizePixel = 0
+TopBar.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInput = input
+    end
+end)
 
-local statsCorner = Instance.new("UICorner", StatsFrame)
-statsCorner.CornerRadius = UDim.new(0,8)
+UIS.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        local delta = input.Position - dragStart
+        Shadow.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
 
-local StatsText = Instance.new("TextLabel", StatsFrame)
-StatsText.Size = UDim2.new(1,-10,1,-10)
-StatsText.Position = UDim2.new(0,5,0,5)
-StatsText.BackgroundTransparency = 1
-StatsText.TextColor3 = Color3.new(1,1,1)
-StatsText.Font = Enum.Font.Code
-StatsText.TextSize = 11
-StatsText.TextXAlignment = Enum.TextXAlignment.Left
-StatsText.TextYAlignment = Enum.TextYAlignment.Top
+-- Intro Animation
+Shadow.Size = UDim2.new(0, 0, 0, 0)
+Main.Size = UDim2.new(0, 0, 0, 0)
+Tween(Shadow, {Size = UDim2.new(0, 500, 0, 500)}, 0.5)
+Tween(Main, {Size = UDim2.new(0, 460, 0, 500)}, 0.5)
 
 --========================
 -- MAIN LOOP
@@ -563,32 +661,12 @@ RunService.RenderStepped:Connect(function()
         FOV.Position = Vector2.new(mouse.X,mouse.Y)
         FOV.Radius = Settings.FOV
 
-        -- Actualizar stats
-        local targetText = CurrentTarget and "LOCKED" or "SEARCHING"
-        local playersVisible = 0
-        for _,p in ipairs(Players:GetPlayers()) do
-            if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-                local pos, vis = Camera:WorldToViewportPoint(p.Character.HumanoidRootPart.Position)
-                if vis then playersVisible = playersVisible + 1 end
-            end
-        end
-        
-        StatsText.Text = string.format(
-            "STATUS: %s\nTarget: %s\nPlayers: %d\nFPS: %d\nPing: %dms",
-            Settings.Aimbot and "ACTIVE" or "IDLE",
-            targetText,
-            playersVisible,
-            math.floor(1/RunService.RenderStepped:Wait()),
-            math.floor(LocalPlayer:GetNetworkPing() * 1000)
-        )
-
         if Settings.Aimbot and Holding then
             local currentTime = tick()
             if currentTime - LastTargetCheck > 0.1 or not IsTargetValid(CurrentTarget) then
                 LastTargetCheck = currentTime
                 CurrentTarget = GetClosestTarget()
             end
-            
             if CurrentTarget and IsTargetValid(CurrentTarget) then
                 local aimPos = PredictPosition(CurrentTarget)
                 Camera.CFrame = Camera.CFrame:Lerp(
@@ -602,6 +680,6 @@ RunService.RenderStepped:Connect(function()
     end)
 end)
 
-print("✅ Squid Game 2042 PRO - Cargado exitosamente")
-print("📊 Estadísticas en tiempo real activadas")
-print("🎯 Predicción de movimiento habilitada")
+print("✅ GF Cheats | Squid Game 2042 - Loaded")
+print("🎨 Rayfield UI Style")
+print("🎯 All systems operational")

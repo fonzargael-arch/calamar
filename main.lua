@@ -785,7 +785,7 @@ local CreditsText = Instance.new("TextLabel", Credits)
 CreditsText.Size = UDim2.new(1, -20, 1, 0)
 CreditsText.Position = UDim2.new(0, 10, 0, 0)
 CreditsText.BackgroundTransparency = 1
-CreditsText.Text = "💎 GAEL FONZAR SCRIPTS 💎\n\nCreado con ❤️ por Lola 🐉"
+CreditsText.Text = "💎 GAEL FONZAR SCRIPTS 💎"
 CreditsText.TextColor3 = Theme.Accent
 CreditsText.Font = Enum.Font.GothamBold
 CreditsText.TextSize = 14
@@ -985,6 +985,3 @@ RunService.RenderStepped:Connect(function()
 end)
 
 print("✅ GF HUB - Loaded Successfully")
-print("💎 Created by Gael Fonzar")
-print("🎨 Theme System Active")
-print("🎯 All Features Ready")

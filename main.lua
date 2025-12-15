@@ -1,5 +1,5 @@
--- Squid Game 2042 | Rayfield Style + GF Logo
--- By Lola 🐉
+-- Squid Game 2042 | GF Hub
+-- By Gael Fonzar
 
 --========================
 -- PLACE ID CHECK
@@ -41,24 +41,89 @@ local Settings = {
     PredictMovement = true,
     IgnoreTeam = true,
     ShowFOVCircle = true,
-    WallCheck = false
+    WallCheck = false,
+    CurrentTheme = "Purple"
 }
 
 --========================
--- THEME (Rayfield)
+-- THEMES
 --========================
-local Theme = {
-    Background = Color3.fromRGB(25, 25, 35),
-    SecondaryBackground = Color3.fromRGB(30, 30, 40),
-    Stroke = Color3.fromRGB(60, 60, 80),
-    Divider = Color3.fromRGB(40, 40, 55),
-    Text = Color3.fromRGB(240, 240, 250),
-    TextDark = Color3.fromRGB(150, 150, 170),
-    Accent = Color3.fromRGB(135, 110, 255),
-    AccentDark = Color3.fromRGB(100, 80, 200),
-    Success = Color3.fromRGB(100, 220, 120),
-    Error = Color3.fromRGB(255, 80, 80)
+local Themes = {
+    Purple = {
+        Background = Color3.fromRGB(25, 25, 35),
+        SecondaryBackground = Color3.fromRGB(30, 30, 40),
+        Stroke = Color3.fromRGB(60, 60, 80),
+        Divider = Color3.fromRGB(40, 40, 55),
+        Text = Color3.fromRGB(240, 240, 250),
+        TextDark = Color3.fromRGB(150, 150, 170),
+        Accent = Color3.fromRGB(135, 110, 255),
+        AccentDark = Color3.fromRGB(100, 80, 200),
+        Success = Color3.fromRGB(100, 220, 120),
+        Error = Color3.fromRGB(255, 80, 80)
+    },
+    Red = {
+        Background = Color3.fromRGB(30, 20, 20),
+        SecondaryBackground = Color3.fromRGB(40, 25, 25),
+        Stroke = Color3.fromRGB(80, 40, 40),
+        Divider = Color3.fromRGB(60, 30, 30),
+        Text = Color3.fromRGB(255, 240, 240),
+        TextDark = Color3.fromRGB(170, 130, 130),
+        Accent = Color3.fromRGB(255, 60, 60),
+        AccentDark = Color3.fromRGB(200, 40, 40),
+        Success = Color3.fromRGB(100, 220, 120),
+        Error = Color3.fromRGB(255, 80, 80)
+    },
+    Blue = {
+        Background = Color3.fromRGB(15, 25, 40),
+        SecondaryBackground = Color3.fromRGB(20, 30, 50),
+        Stroke = Color3.fromRGB(40, 60, 100),
+        Divider = Color3.fromRGB(30, 45, 70),
+        Text = Color3.fromRGB(240, 245, 255),
+        TextDark = Color3.fromRGB(130, 150, 180),
+        Accent = Color3.fromRGB(60, 130, 255),
+        AccentDark = Color3.fromRGB(40, 100, 220),
+        Success = Color3.fromRGB(100, 220, 120),
+        Error = Color3.fromRGB(255, 80, 80)
+    },
+    Green = {
+        Background = Color3.fromRGB(20, 30, 25),
+        SecondaryBackground = Color3.fromRGB(25, 40, 30),
+        Stroke = Color3.fromRGB(40, 80, 60),
+        Divider = Color3.fromRGB(30, 60, 45),
+        Text = Color3.fromRGB(240, 255, 245),
+        TextDark = Color3.fromRGB(130, 170, 150),
+        Accent = Color3.fromRGB(60, 255, 130),
+        AccentDark = Color3.fromRGB(40, 200, 100),
+        Success = Color3.fromRGB(100, 220, 120),
+        Error = Color3.fromRGB(255, 80, 80)
+    },
+    Orange = {
+        Background = Color3.fromRGB(30, 25, 20),
+        SecondaryBackground = Color3.fromRGB(40, 32, 25),
+        Stroke = Color3.fromRGB(80, 60, 40),
+        Divider = Color3.fromRGB(60, 45, 30),
+        Text = Color3.fromRGB(255, 245, 240),
+        TextDark = Color3.fromRGB(170, 150, 130),
+        Accent = Color3.fromRGB(255, 140, 60),
+        AccentDark = Color3.fromRGB(220, 110, 40),
+        Success = Color3.fromRGB(100, 220, 120),
+        Error = Color3.fromRGB(255, 80, 80)
+    },
+    Pink = {
+        Background = Color3.fromRGB(35, 20, 30),
+        SecondaryBackground = Color3.fromRGB(45, 25, 40),
+        Stroke = Color3.fromRGB(90, 40, 80),
+        Divider = Color3.fromRGB(70, 30, 60),
+        Text = Color3.fromRGB(255, 240, 250),
+        TextDark = Color3.fromRGB(180, 130, 170),
+        Accent = Color3.fromRGB(255, 100, 200),
+        AccentDark = Color3.fromRGB(220, 70, 170),
+        Success = Color3.fromRGB(100, 220, 120),
+        Error = Color3.fromRGB(255, 80, 80)
+    }
 }
+
+local Theme = Themes[Settings.CurrentTheme]
 
 --========================
 -- UTILITIES
@@ -68,6 +133,14 @@ local function Tween(obj, props, duration)
     local tween = TweenService:Create(obj, TweenInfo.new(duration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), props)
     tween:Play()
     return tween
+end
+
+local function UpdateTheme()
+    Theme = Themes[Settings.CurrentTheme]
+    -- Actualizar todos los elementos de UI con el nuevo tema
+    if _G.GFHubUI then
+        _G.GFHubUI.UpdateColors()
+    end
 end
 
 --========================
@@ -294,30 +367,72 @@ for _,p in ipairs(Players:GetPlayers()) do CreateESP(p) end
 Players.PlayerAdded:Connect(CreateESP)
 
 --========================
--- GUI RAYFIELD STYLE
+-- INTRO SCREEN
+--========================
+local IntroGui = Instance.new("ScreenGui", CoreGui)
+IntroGui.Name = "GFIntro"
+IntroGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+local IntroFrame = Instance.new("Frame", IntroGui)
+IntroFrame.Size = UDim2.new(1, 0, 1, 0)
+IntroFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+IntroFrame.BorderSizePixel = 0
+
+local IntroText1 = Instance.new("TextLabel", IntroFrame)
+IntroText1.Size = UDim2.new(0, 400, 0, 80)
+IntroText1.Position = UDim2.new(0.5, -200, 0.5, -40)
+IntroText1.BackgroundTransparency = 1
+IntroText1.Text = "GF HUB"
+IntroText1.TextColor3 = Color3.fromRGB(255, 255, 255)
+IntroText1.Font = Enum.Font.GothamBold
+IntroText1.TextSize = 60
+IntroText1.TextTransparency = 1
+
+local IntroText2 = Instance.new("TextLabel", IntroFrame)
+IntroText2.Size = UDim2.new(0, 400, 0, 40)
+IntroText2.Position = UDim2.new(0.5, -200, 0.5, 50)
+IntroText2.BackgroundTransparency = 1
+IntroText2.Text = "PRESENTS"
+IntroText2.TextColor3 = Theme.Accent
+IntroText2.Font = Enum.Font.Gotham
+IntroText2.TextSize = 24
+IntroText2.TextTransparency = 1
+
+-- Animación de intro
+Tween(IntroText1, {TextTransparency = 0}, 1)
+wait(0.5)
+Tween(IntroText2, {TextTransparency = 0}, 1)
+wait(2)
+Tween(IntroText1, {TextTransparency = 1}, 0.5)
+Tween(IntroText2, {TextTransparency = 1}, 0.5)
+wait(0.5)
+Tween(IntroFrame, {BackgroundTransparency = 1}, 0.5)
+wait(0.5)
+IntroGui:Destroy()
+
+--========================
+-- GUI PRINCIPAL
 --========================
 local Gui = Instance.new("ScreenGui", CoreGui)
-Gui.Name = "RayfieldGF"
+Gui.Name = "GFHub"
 Gui.ResetOnSpawn = false
 Gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
--- Shadow
 local Shadow = Instance.new("ImageLabel", Gui)
 Shadow.Name = "Shadow"
 Shadow.BackgroundTransparency = 1
-Shadow.Size = UDim2.new(0, 500, 0, 500)
-Shadow.Position = UDim2.new(0.5, -250, 0.5, -250)
+Shadow.Size = UDim2.new(0, 520, 0, 520)
+Shadow.Position = UDim2.new(0.5, -260, 0.5, -260)
 Shadow.Image = "rbxassetid://6015897843"
 Shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
 Shadow.ImageTransparency = 0.5
 Shadow.ScaleType = Enum.ScaleType.Slice
 Shadow.SliceCenter = Rect.new(49, 49, 450, 450)
 
--- Main Frame
 local Main = Instance.new("Frame", Shadow)
 Main.Name = "Main"
-Main.Size = UDim2.new(0, 460, 0, 500)
-Main.Position = UDim2.new(0.5, -230, 0.5, -250)
+Main.Size = UDim2.new(0, 480, 0, 520)
+Main.Position = UDim2.new(0.5, -240, 0.5, -260)
 Main.BackgroundColor3 = Theme.Background
 Main.BorderSizePixel = 0
 Main.ClipsDescendants = true
@@ -326,11 +441,10 @@ local MainCorner = Instance.new("UICorner", Main)
 MainCorner.CornerRadius = UDim.new(0, 12)
 
 local MainStroke = Instance.new("UIStroke", Main)
-MainStroke.Color = Theme.Stroke
-MainStroke.Thickness = 1
+MainStroke.Color = Theme.Accent
+MainStroke.Thickness = 2
 MainStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
--- Top Bar
 local TopBar = Instance.new("Frame", Main)
 TopBar.Name = "TopBar"
 TopBar.Size = UDim2.new(1, 0, 0, 50)
@@ -346,29 +460,6 @@ TopFix.Position = UDim2.new(0, 0, 1, -25)
 TopFix.BackgroundColor3 = Theme.SecondaryBackground
 TopFix.BorderSizePixel = 0
 
--- Title with GF
-local Title = Instance.new("TextLabel", TopBar)
-Title.Size = UDim2.new(1, -100, 1, 0)
-Title.Position = UDim2.new(0, 55, 0, 0)
-Title.BackgroundTransparency = 1
-Title.Text = "GF CHEATS"
-Title.TextColor3 = Theme.Text
-Title.Font = Enum.Font.GothamBold
-Title.TextSize = 18
-Title.TextXAlignment = Enum.TextXAlignment.Left
-
-local Subtitle = Instance.new("TextLabel", TopBar)
-Subtitle.Size = UDim2.new(1, -100, 1, 0)
-Subtitle.Position = UDim2.new(0, 55, 0, 0)
-Subtitle.BackgroundTransparency = 1
-Subtitle.Text = "Squid Game 2042"
-Subtitle.TextColor3 = Theme.TextDark
-Subtitle.Font = Enum.Font.Gotham
-Subtitle.TextSize = 11
-Subtitle.TextXAlignment = Enum.TextXAlignment.Left
-Subtitle.TextYAlignment = Enum.TextYAlignment.Bottom
-
--- GF Logo Icon (simplified)
 local LogoFrame = Instance.new("Frame", TopBar)
 LogoFrame.Size = UDim2.new(0, 35, 0, 35)
 LogoFrame.Position = UDim2.new(0, 10, 0.5, -17.5)
@@ -378,6 +469,10 @@ LogoFrame.BorderSizePixel = 0
 local LogoCorner = Instance.new("UICorner", LogoFrame)
 LogoCorner.CornerRadius = UDim.new(1, 0)
 
+local LogoStroke = Instance.new("UIStroke", LogoFrame)
+LogoStroke.Color = Color3.fromRGB(255, 255, 255)
+LogoStroke.Thickness = 2
+
 local LogoText = Instance.new("TextLabel", LogoFrame)
 LogoText.Size = UDim2.new(1, 0, 1, 0)
 LogoText.BackgroundTransparency = 1
@@ -386,7 +481,28 @@ LogoText.TextColor3 = Color3.new(1, 1, 1)
 LogoText.Font = Enum.Font.GothamBold
 LogoText.TextSize = 16
 
--- Minimize Button
+local Title = Instance.new("TextLabel", TopBar)
+Title.Size = UDim2.new(1, -160, 1, -10)
+Title.Position = UDim2.new(0, 55, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "GF HUB"
+Title.TextColor3 = Theme.Text
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 18
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.TextYAlignment = Enum.TextYAlignment.Top
+
+local Subtitle = Instance.new("TextLabel", TopBar)
+Subtitle.Size = UDim2.new(1, -160, 1, -5)
+Subtitle.Position = UDim2.new(0, 55, 0, 0)
+Subtitle.BackgroundTransparency = 1
+Subtitle.Text = "Squid Game 2042"
+Subtitle.TextColor3 = Theme.TextDark
+Subtitle.Font = Enum.Font.Gotham
+Subtitle.TextSize = 11
+Subtitle.TextXAlignment = Enum.TextXAlignment.Left
+Subtitle.TextYAlignment = Enum.TextYAlignment.Bottom
+
 local MinBtn = Instance.new("TextButton", TopBar)
 MinBtn.Size = UDim2.new(0, 35, 0, 35)
 MinBtn.Position = UDim2.new(1, -45, 0.5, -17.5)
@@ -404,14 +520,12 @@ local MinStroke = Instance.new("UIStroke", MinBtn)
 MinStroke.Color = Theme.Stroke
 MinStroke.Thickness = 1
 
--- Divider Line
 local Divider = Instance.new("Frame", Main)
-Divider.Size = UDim2.new(1, -40, 0, 1)
+Divider.Size = UDim2.new(1, -40, 0, 2)
 Divider.Position = UDim2.new(0, 20, 0, 60)
 Divider.BackgroundColor3 = Theme.Divider
 Divider.BorderSizePixel = 0
 
--- Scroll Frame
 local ScrollFrame = Instance.new("ScrollingFrame", Main)
 ScrollFrame.Size = UDim2.new(1, -40, 1, -80)
 ScrollFrame.Position = UDim2.new(0, 20, 0, 70)
@@ -426,7 +540,47 @@ local UIList = Instance.new("UIListLayout", ScrollFrame)
 UIList.SortOrder = Enum.SortOrder.LayoutOrder
 UIList.Padding = UDim.new(0, 8)
 
--- Functions for UI Elements
+-- Almacenar referencias para actualizar colores
+_G.GFHubUI = {
+    Elements = {},
+    UpdateColors = function()
+        -- Actualizar Main
+        Main.BackgroundColor3 = Theme.Background
+        MainStroke.Color = Theme.Accent
+        TopBar.BackgroundColor3 = Theme.SecondaryBackground
+        TopFix.BackgroundColor3 = Theme.SecondaryBackground
+        LogoFrame.BackgroundColor3 = Theme.Accent
+        Title.TextColor3 = Theme.Text
+        Subtitle.TextColor3 = Theme.TextDark
+        MinBtn.BackgroundColor3 = Theme.SecondaryBackground
+        MinBtn.TextColor3 = Theme.Text
+        MinStroke.Color = Theme.Stroke
+        Divider.BackgroundColor3 = Theme.Divider
+        ScrollFrame.ScrollBarImageColor3 = Theme.Accent
+        FOV.Color = Theme.Accent
+        
+        -- Actualizar todos los elementos guardados
+        for _, element in pairs(_G.GFHubUI.Elements) do
+            if element.Type == "Toggle" then
+                element.Frame.BackgroundColor3 = Theme.SecondaryBackground
+                element.Stroke.Color = Theme.Stroke
+                element.Label.TextColor3 = Theme.Text
+                if element.State then
+                    element.Button.BackgroundColor3 = Theme.Success
+                else
+                    element.Button.BackgroundColor3 = Theme.Stroke
+                end
+            elseif element.Type == "Section" then
+                element.Label.TextColor3 = Theme.Accent
+            elseif element.Type == "ThemeButton" then
+                element.Button.BackgroundColor3 = Theme.SecondaryBackground
+                element.Stroke.Color = Theme.Stroke
+                element.Label.TextColor3 = Theme.Text
+            end
+        end
+    end
+}
+
 local function Section(text)
     local section = Instance.new("TextLabel", ScrollFrame)
     section.Size = UDim2.new(1, 0, 0, 25)
@@ -436,6 +590,8 @@ local function Section(text)
     section.Font = Enum.Font.GothamBold
     section.TextSize = 13
     section.TextXAlignment = Enum.TextXAlignment.Left
+    
+    table.insert(_G.GFHubUI.Elements, {Type = "Section", Label = section})
     return section
 end
 
@@ -483,8 +639,19 @@ local function Toggle(text, default, callback)
     
     local state = default
     
+    local elementData = {
+        Type = "Toggle",
+        Frame = toggle,
+        Stroke = toggleStroke,
+        Label = label,
+        Button = button,
+        State = state
+    }
+    table.insert(_G.GFHubUI.Elements, elementData)
+    
     button.MouseButton1Click:Connect(function()
         state = not state
+        elementData.State = state
         callback(state)
         
         Tween(button, {BackgroundColor3 = state and Theme.Success or Theme.Stroke}, 0.2)
@@ -494,8 +661,61 @@ local function Toggle(text, default, callback)
     return toggle
 end
 
--- Create UI Elements
-Section("AIMBOT")
+local function ThemeButton(themeName, themeColor)
+    local btn = Instance.new("TextButton", ScrollFrame)
+    btn.Size = UDim2.new(1, 0, 0, 40)
+    btn.BackgroundColor3 = Theme.SecondaryBackground
+    btn.BorderSizePixel = 0
+    btn.Text = ""
+    
+    local btnCorner = Instance.new("UICorner", btn)
+    btnCorner.CornerRadius = UDim.new(0, 8)
+    
+    local btnStroke = Instance.new("UIStroke", btn)
+    btnStroke.Color = Theme.Stroke
+    btnStroke.Thickness = 1
+    
+    local colorPreview = Instance.new("Frame", btn)
+    colorPreview.Size = UDim2.new(0, 25, 0, 25)
+    colorPreview.Position = UDim2.new(0, 10, 0.5, -12.5)
+    colorPreview.BackgroundColor3 = themeColor
+    colorPreview.BorderSizePixel = 0
+    
+    local colorCorner = Instance.new("UICorner", colorPreview)
+    colorCorner.CornerRadius = UDim.new(1, 0)
+    
+    local colorStroke = Instance.new("UIStroke", colorPreview)
+    colorStroke.Color = Color3.fromRGB(255, 255, 255)
+    colorStroke.Thickness = 2
+    
+    local label = Instance.new("TextLabel", btn)
+    label.Size = UDim2.new(1, -50, 1, 0)
+    label.Position = UDim2.new(0, 45, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = themeName
+    label.TextColor3 = Theme.Text
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 13
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    
+    local elementData = {
+        Type = "ThemeButton",
+        Button = btn,
+        Stroke = btnStroke,
+        Label = label
+    }
+    table.insert(_G.GFHubUI.Elements, elementData)
+    
+    btn.MouseButton1Click:Connect(function()
+        Settings.CurrentTheme = themeName
+        UpdateTheme()
+    end)
+    
+    return btn
+end
+
+-- Crear secciones
+Section("━━━ AIMBOT ━━━")
 
 Toggle("Aimbot", Settings.Aimbot, function(v)
     Settings.Aimbot = v
@@ -514,7 +734,7 @@ Toggle("Círculo FOV", Settings.ShowFOVCircle, function(v)
     FOV.Visible = v
 end)
 
-Section("ESP / VISUAL")
+Section("━━━ ESP / VISUAL ━━━")
 
 Toggle("ESP Activado", Settings.ESP, function(v)
     Settings.ESP = v
@@ -536,7 +756,7 @@ Toggle("Tracers", Settings.ShowTracers, function(v)
     Settings.ShowTracers = v
 end)
 
-Section("FILTROS")
+Section("━━━ FILTROS ━━━")
 
 Toggle("Ver Enemigos", Settings.ShowEnemies, function(v)
     Settings.ShowEnemies = v
@@ -546,7 +766,42 @@ Toggle("Ver Equipo", Settings.ShowTeam, function(v)
     Settings.ShowTeam = v
 end)
 
--- Minimize Functionality with GF Logo
+Section("━━━ TEMAS ━━━")
+
+ThemeButton("Purple", Color3.fromRGB(135, 110, 255))
+ThemeButton("Red", Color3.fromRGB(255, 60, 60))
+ThemeButton("Blue", Color3.fromRGB(60, 130, 255))
+ThemeButton("Green", Color3.fromRGB(60, 255, 130))
+ThemeButton("Orange", Color3.fromRGB(255, 140, 60))
+ThemeButton("Pink", Color3.fromRGB(255, 100, 200))
+
+Section("━━━ CRÉDITOS ━━━")
+
+local Credits = Instance.new("Frame", ScrollFrame)
+Credits.Size = UDim2.new(1, 0, 0, 70)
+Credits.BackgroundColor3 = Theme.SecondaryBackground
+Credits.BorderSizePixel = 0
+
+local CreditsCorner = Instance.new("UICorner", Credits)
+CreditsCorner.CornerRadius = UDim.new(0, 8)
+
+local CreditsStroke = Instance.new("UIStroke", Credits)
+CreditsStroke.Color = Theme.Accent
+CreditsStroke.Thickness = 2
+
+local CreditsText = Instance.new("TextLabel", Credits)
+CreditsText.Size = UDim2.new(1, -20, 1, 0)
+CreditsText.Position = UDim2.new(0, 10, 0, 0)
+CreditsText.BackgroundTransparency = 1
+CreditsText.Text = "💎 GAEL FONZAR SCRIPTS 💎\n\nCreado con ❤️ por Lola 🐉"
+CreditsText.TextColor3 = Theme.Accent
+CreditsText.Font = Enum.Font.GothamBold
+CreditsText.TextSize = 14
+CreditsText.TextYAlignment = Enum.TextYAlignment.Center
+
+table.insert(_G.GFHubUI.Elements, {Type = "Credits", Frame = Credits, Stroke = CreditsStroke, Label = CreditsText})
+
+-- Minimizar con logo GF
 local MiniButton
 MinBtn.MouseButton1Click:Connect(function()
     Tween(Shadow, {Size = UDim2.new(0, 0, 0, 0)}, 0.3)
@@ -556,7 +811,6 @@ MinBtn.MouseButton1Click:Connect(function()
     
     if MiniButton then MiniButton:Destroy() end
     
-    -- Create Mini Button with GF Logo
     MiniButton = Instance.new("ImageButton", Gui)
     MiniButton.Name = "MiniLogo"
     MiniButton.Size = UDim2.new(0, 0, 0, 0)
@@ -570,9 +824,8 @@ MinBtn.MouseButton1Click:Connect(function()
     
     local miniStroke = Instance.new("UIStroke", MiniButton)
     miniStroke.Color = Theme.Accent
-    miniStroke.Thickness = 2
+    miniStroke.Thickness = 3
     
-    -- GF Logo Recreation
     local gfFrame = Instance.new("Frame", MiniButton)
     gfFrame.Size = UDim2.new(0.7, 0, 0.7, 0)
     gfFrame.Position = UDim2.new(0.15, 0, 0.15, 0)
@@ -587,7 +840,6 @@ MinBtn.MouseButton1Click:Connect(function()
     gfText.TextSize = 28
     gfText.TextScaled = true
     
-    -- Orbital rings effect
     local ring1 = Instance.new("ImageLabel", MiniButton)
     ring1.Size = UDim2.new(1, 0, 1, 0)
     ring1.BackgroundTransparency = 1
@@ -595,12 +847,14 @@ MinBtn.MouseButton1Click:Connect(function()
     ring1.ImageColor3 = Theme.Accent
     ring1.ImageTransparency = 0.3
     
-    Tween(MiniButton, {Size = UDim2.new(0, 60, 0, 60)}, 0.3)
+    Tween(MiniButton, {Size = UDim2.new(0, 70, 0, 70)}, 0.3)
     
-    -- Rotation animation
-    RunService.RenderStepped:Connect(function()
+    local rotConnection
+    rotConnection = RunService.RenderStepped:Connect(function()
         if ring1 and ring1.Parent then
             ring1.Rotation = ring1.Rotation + 0.5
+        else
+            rotConnection:Disconnect()
         end
     end)
     
@@ -613,18 +867,20 @@ MinBtn.MouseButton1Click:Connect(function()
         Shadow.Visible = true
         Shadow.Size = UDim2.new(0, 0, 0, 0)
         Main.Size = UDim2.new(0, 0, 0, 0)
-        Tween(Shadow, {Size = UDim2.new(0, 500, 0, 500)}, 0.3)
-        Tween(Main, {Size = UDim2.new(0, 460, 0, 500)}, 0.3)
+        Tween(Shadow, {Size = UDim2.new(0, 520, 0, 520)}, 0.3)
+        Tween(Main, {Size = UDim2.new(0, 480, 0, 520)}, 0.3)
     end)
 end)
 
--- Dragging
+-- ARREGLAR DRAGGING
 local dragging, dragInput, dragStart, startPos
+
 TopBar.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         dragging = true
         dragStart = input.Position
         startPos = Shadow.Position
+        
         input.Changed:Connect(function()
             if input.UserInputState == Enum.UserInputState.End then
                 dragging = false
@@ -634,7 +890,7 @@ TopBar.InputBegan:Connect(function(input)
 end)
 
 TopBar.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement then
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
         dragInput = input
     end
 end)
@@ -642,15 +898,23 @@ end)
 UIS.InputChanged:Connect(function(input)
     if input == dragInput and dragging then
         local delta = input.Position - dragStart
-        Shadow.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        Tween(Shadow, {
+            Position = UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset + delta.Y
+            )
+        }, 0.1)
     end
 end)
 
--- Intro Animation
+-- Animación de entrada
 Shadow.Size = UDim2.new(0, 0, 0, 0)
 Main.Size = UDim2.new(0, 0, 0, 0)
-Tween(Shadow, {Size = UDim2.new(0, 500, 0, 500)}, 0.5)
-Tween(Main, {Size = UDim2.new(0, 460, 0, 500)}, 0.5)
+wait(0.5)
+Tween(Shadow, {Size = UDim2.new(0, 520, 0, 520)}, 0.5)
+Tween(Main, {Size = UDim2.new(0, 480, 0, 520)}, 0.5)
 
 --========================
 -- MAIN LOOP
@@ -680,6 +944,7 @@ RunService.RenderStepped:Connect(function()
     end)
 end)
 
-print("✅ GF Cheats | Squid Game 2042 - Loaded")
-print("🎨 Rayfield UI Style")
-print("🎯 All systems operational")
+print("✅ GF HUB - Loaded Successfully")
+print("💎 Created by Gael Fonzar")
+print("🎨 Theme System Active")
+print("🎯 All Features Ready")

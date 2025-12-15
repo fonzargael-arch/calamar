@@ -28,19 +28,19 @@ local LocalPlayer = Players.LocalPlayer
 local Settings = {
     Aimbot = false,
     ESP = false,
-    ShowEnemies = true,
-    ShowTeam = true,
-    ShowDistance = true,
-    ShowHealth = true,
+    ShowEnemies = false,
+    ShowTeam = false,
+    ShowDistance = false,
+    ShowHealth = false,
     ShowBoxes = false,
     ShowTracers = false,
     HoldKey = Enum.UserInputType.MouseButton2,
     FOV = 160,
     Smoothness = 0.15,
     AimPart = "Head",
-    PredictMovement = true,
+    PredictMovement = false,
     IgnoreTeam = true,
-    ShowFOVCircle = true,
+    ShowFOVCircle = false,
     WallCheck = false,
     CurrentTheme = "Purple"
 }
@@ -50,10 +50,10 @@ local Settings = {
 --========================
 local Themes = {
     Purple = {
-        Background = Color3.fromRGB(25, 25, 35),
-        SecondaryBackground = Color3.fromRGB(30, 30, 40),
+        Background = Color3.fromRGB(15, 15, 15),
+        SecondaryBackground = Color3.fromRGB(20, 20, 20),
         Stroke = Color3.fromRGB(60, 60, 80),
-        Divider = Color3.fromRGB(40, 40, 55),
+        Divider = Color3.fromRGB(30, 30, 30),
         Text = Color3.fromRGB(240, 240, 250),
         TextDark = Color3.fromRGB(150, 150, 170),
         Accent = Color3.fromRGB(135, 110, 255),
@@ -62,10 +62,10 @@ local Themes = {
         Error = Color3.fromRGB(255, 80, 80)
     },
     Red = {
-        Background = Color3.fromRGB(30, 20, 20),
-        SecondaryBackground = Color3.fromRGB(40, 25, 25),
+        Background = Color3.fromRGB(15, 15, 15),
+        SecondaryBackground = Color3.fromRGB(20, 20, 20),
         Stroke = Color3.fromRGB(80, 40, 40),
-        Divider = Color3.fromRGB(60, 30, 30),
+        Divider = Color3.fromRGB(30, 30, 30),
         Text = Color3.fromRGB(255, 240, 240),
         TextDark = Color3.fromRGB(170, 130, 130),
         Accent = Color3.fromRGB(255, 60, 60),
@@ -74,10 +74,10 @@ local Themes = {
         Error = Color3.fromRGB(255, 80, 80)
     },
     Blue = {
-        Background = Color3.fromRGB(15, 25, 40),
-        SecondaryBackground = Color3.fromRGB(20, 30, 50),
+        Background = Color3.fromRGB(15, 15, 15),
+        SecondaryBackground = Color3.fromRGB(20, 20, 20),
         Stroke = Color3.fromRGB(40, 60, 100),
-        Divider = Color3.fromRGB(30, 45, 70),
+        Divider = Color3.fromRGB(30, 30, 30),
         Text = Color3.fromRGB(240, 245, 255),
         TextDark = Color3.fromRGB(130, 150, 180),
         Accent = Color3.fromRGB(60, 130, 255),
@@ -86,10 +86,10 @@ local Themes = {
         Error = Color3.fromRGB(255, 80, 80)
     },
     Green = {
-        Background = Color3.fromRGB(20, 30, 25),
-        SecondaryBackground = Color3.fromRGB(25, 40, 30),
+        Background = Color3.fromRGB(15, 15, 15),
+        SecondaryBackground = Color3.fromRGB(20, 20, 20),
         Stroke = Color3.fromRGB(40, 80, 60),
-        Divider = Color3.fromRGB(30, 60, 45),
+        Divider = Color3.fromRGB(30, 30, 30),
         Text = Color3.fromRGB(240, 255, 245),
         TextDark = Color3.fromRGB(130, 170, 150),
         Accent = Color3.fromRGB(60, 255, 130),
@@ -98,10 +98,10 @@ local Themes = {
         Error = Color3.fromRGB(255, 80, 80)
     },
     Orange = {
-        Background = Color3.fromRGB(30, 25, 20),
-        SecondaryBackground = Color3.fromRGB(40, 32, 25),
+        Background = Color3.fromRGB(15, 15, 15),
+        SecondaryBackground = Color3.fromRGB(20, 20, 20),
         Stroke = Color3.fromRGB(80, 60, 40),
-        Divider = Color3.fromRGB(60, 45, 30),
+        Divider = Color3.fromRGB(30, 30, 30),
         Text = Color3.fromRGB(255, 245, 240),
         TextDark = Color3.fromRGB(170, 150, 130),
         Accent = Color3.fromRGB(255, 140, 60),
@@ -110,10 +110,10 @@ local Themes = {
         Error = Color3.fromRGB(255, 80, 80)
     },
     Pink = {
-        Background = Color3.fromRGB(35, 20, 30),
-        SecondaryBackground = Color3.fromRGB(45, 25, 40),
+        Background = Color3.fromRGB(15, 15, 15),
+        SecondaryBackground = Color3.fromRGB(20, 20, 20),
         Stroke = Color3.fromRGB(90, 40, 80),
-        Divider = Color3.fromRGB(70, 30, 60),
+        Divider = Color3.fromRGB(30, 30, 30),
         Text = Color3.fromRGB(255, 240, 250),
         TextDark = Color3.fromRGB(180, 130, 170),
         Accent = Color3.fromRGB(255, 100, 200),
@@ -137,7 +137,7 @@ end
 
 local function UpdateTheme()
     Theme = Themes[Settings.CurrentTheme]
-    -- Actualizar todos los elementos de UI con el nuevo tema
+    -- Actualizar solo los strokes con el nuevo tema
     if _G.GFHubUI then
         _G.GFHubUI.UpdateColors()
     end
@@ -176,10 +176,10 @@ local FOV = Drawing.new("Circle")
 FOV.Thickness = 2
 FOV.NumSides = 64
 FOV.Radius = Settings.FOV
-FOV.Color = Theme.Accent
+FOV.Color = Color3.fromRGB(255, 255, 255)
 FOV.Filled = false
 FOV.Visible = Settings.ShowFOVCircle
-FOV.Transparency = 0.6
+FOV.Transparency = 0.8
 
 --========================
 -- AIMBOT LOGIC
@@ -544,38 +544,30 @@ UIList.Padding = UDim.new(0, 8)
 _G.GFHubUI = {
     Elements = {},
     UpdateColors = function()
-        -- Actualizar Main
-        Main.BackgroundColor3 = Theme.Background
+        -- Actualizar SOLO los strokes y accent colors
         MainStroke.Color = Theme.Accent
-        TopBar.BackgroundColor3 = Theme.SecondaryBackground
-        TopFix.BackgroundColor3 = Theme.SecondaryBackground
         LogoFrame.BackgroundColor3 = Theme.Accent
-        Title.TextColor3 = Theme.Text
-        Subtitle.TextColor3 = Theme.TextDark
-        MinBtn.BackgroundColor3 = Theme.SecondaryBackground
-        MinBtn.TextColor3 = Theme.Text
-        MinStroke.Color = Theme.Stroke
-        Divider.BackgroundColor3 = Theme.Divider
         ScrollFrame.ScrollBarImageColor3 = Theme.Accent
-        FOV.Color = Theme.Accent
         
-        -- Actualizar todos los elementos guardados
+        -- Actualizar strokes de elementos
         for _, element in pairs(_G.GFHubUI.Elements) do
-            if element.Type == "Toggle" then
-                element.Frame.BackgroundColor3 = Theme.SecondaryBackground
-                element.Stroke.Color = Theme.Stroke
-                element.Label.TextColor3 = Theme.Text
-                if element.State then
-                    element.Button.BackgroundColor3 = Theme.Success
-                else
-                    element.Button.BackgroundColor3 = Theme.Stroke
-                end
-            elseif element.Type == "Section" then
+            if element.Type == "Section" then
                 element.Label.TextColor3 = Theme.Accent
-            elseif element.Type == "ThemeButton" then
-                element.Button.BackgroundColor3 = Theme.SecondaryBackground
-                element.Stroke.Color = Theme.Stroke
-                element.Label.TextColor3 = Theme.Text
+            elseif element.Type == "Credits" then
+                element.Stroke.Color = Theme.Accent
+                element.Label.TextColor3 = Theme.Accent
+            end
+        end
+        
+        -- Actualizar logo minimizado si existe
+        if MiniButton and MiniButton.Parent then
+            local miniStroke = MiniButton:FindFirstChildOfClass("UIStroke")
+            local ring = MiniButton:FindFirstChild("ImageLabel")
+            if miniStroke then
+                miniStroke.Color = Theme.Accent
+            end
+            if ring then
+                ring.ImageColor3 = Theme.Accent
             end
         end
     end
@@ -793,7 +785,7 @@ local CreditsText = Instance.new("TextLabel", Credits)
 CreditsText.Size = UDim2.new(1, -20, 1, 0)
 CreditsText.Position = UDim2.new(0, 10, 0, 0)
 CreditsText.BackgroundTransparency = 1
-CreditsText.Text = "💎 GAEL FONZAR SCRIPTS 💎"
+CreditsText.Text = "💎 GAEL FONZAR SCRIPTS 💎\n\nCreado con ❤️ por Lola 🐉"
 CreditsText.TextColor3 = Theme.Accent
 CreditsText.Font = Enum.Font.GothamBold
 CreditsText.TextSize = 14
@@ -803,6 +795,8 @@ table.insert(_G.GFHubUI.Elements, {Type = "Credits", Frame = Credits, Stroke = C
 
 -- Minimizar con logo GF
 local MiniButton
+local miniDragging, miniDragInput, miniDragStart, miniStartPos
+
 MinBtn.MouseButton1Click:Connect(function()
     Tween(Shadow, {Size = UDim2.new(0, 0, 0, 0)}, 0.3)
     Tween(Main, {Size = UDim2.new(0, 0, 0, 0)}, 0.3)
@@ -815,9 +809,11 @@ MinBtn.MouseButton1Click:Connect(function()
     MiniButton.Name = "MiniLogo"
     MiniButton.Size = UDim2.new(0, 0, 0, 0)
     MiniButton.Position = UDim2.new(0, 20, 0, 20)
-    MiniButton.BackgroundColor3 = Theme.SecondaryBackground
+    MiniButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
     MiniButton.BorderSizePixel = 0
     MiniButton.Image = ""
+    MiniButton.Active = true
+    MiniButton.Draggable = false
     
     local miniCorner = Instance.new("UICorner", MiniButton)
     miniCorner.CornerRadius = UDim.new(1, 0)
@@ -841,6 +837,7 @@ MinBtn.MouseButton1Click:Connect(function()
     gfText.TextScaled = true
     
     local ring1 = Instance.new("ImageLabel", MiniButton)
+    ring1.Name = "Ring"
     ring1.Size = UDim2.new(1, 0, 1, 0)
     ring1.BackgroundTransparency = 1
     ring1.Image = "rbxassetid://3570695787"
@@ -854,21 +851,64 @@ MinBtn.MouseButton1Click:Connect(function()
         if ring1 and ring1.Parent then
             ring1.Rotation = ring1.Rotation + 0.5
         else
-            rotConnection:Disconnect()
+            if rotConnection then
+                rotConnection:Disconnect()
+            end
+        end
+    end)
+    
+    -- Dragging para el logo minimizado
+    MiniButton.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            miniDragging = true
+            miniDragStart = input.Position
+            miniStartPos = MiniButton.Position
+            
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    miniDragging = false
+                end
+            end)
+        end
+    end)
+    
+    MiniButton.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            miniDragInput = input
+        end
+    end)
+    
+    local miniDragConnection
+    miniDragConnection = UIS.InputChanged:Connect(function(input)
+        if input == miniDragInput and miniDragging then
+            local delta = input.Position - miniDragStart
+            MiniButton.Position = UDim2.new(
+                miniStartPos.X.Scale,
+                miniStartPos.X.Offset + delta.X,
+                miniStartPos.Y.Scale,
+                miniStartPos.Y.Offset + delta.Y
+            )
         end
     end)
     
     MiniButton.MouseButton1Click:Connect(function()
-        Tween(MiniButton, {Size = UDim2.new(0, 0, 0, 0)}, 0.3)
-        wait(0.3)
-        MiniButton:Destroy()
-        MiniButton = nil
-        
-        Shadow.Visible = true
-        Shadow.Size = UDim2.new(0, 0, 0, 0)
-        Main.Size = UDim2.new(0, 0, 0, 0)
-        Tween(Shadow, {Size = UDim2.new(0, 520, 0, 520)}, 0.3)
-        Tween(Main, {Size = UDim2.new(0, 480, 0, 520)}, 0.3)
+        if not miniDragging then
+            miniDragConnection:Disconnect()
+            if rotConnection then
+                rotConnection:Disconnect()
+            end
+            
+            Tween(MiniButton, {Size = UDim2.new(0, 0, 0, 0)}, 0.3)
+            wait(0.3)
+            MiniButton:Destroy()
+            MiniButton = nil
+            
+            Shadow.Visible = true
+            Shadow.Size = UDim2.new(0, 0, 0, 0)
+            Main.Size = UDim2.new(0, 0, 0, 0)
+            Tween(Shadow, {Size = UDim2.new(0, 520, 0, 520)}, 0.3)
+            Tween(Main, {Size = UDim2.new(0, 480, 0, 520)}, 0.3)
+        end
     end)
 end)
 
